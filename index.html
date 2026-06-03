@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login Militar</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI;
+  background:linear-gradient(135deg,#0b1f0f,#1b5e20);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:100vh;
+}
+
+.box{
+  width:90%;
+  max-width:380px;
+  background:#123d1a;
+  padding:30px;
+  border-radius:20px;
+  text-align:center;
+  box-shadow:0 0 20px #000;
+}
+
+h1{color:#00ff66}
+
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:10px;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  background:#00c853;
+  color:white;
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+  <h1>LOGIN MILITAR</h1>
+
+  <input id="email" placeholder="Login">
+  <input id="senha" type="password" placeholder="Senha">
+
+  <button onclick="login()">ENTRAR</button>
+
+  <p id="erro" style="color:red"></p>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } 
+from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCeMqdm3gP3g1ys5DboJ68SkiD0aXdVpk4",
+  authDomain: "teste-termux-e0f2c.firebaseapp.com",
+  projectId: "teste-termux-e0f2c",
+  storageBucket: "teste-termux-e0f2c.firebasestorage.app",
+  messagingSenderId: "786962505829",
+  appId: "1:786962505829:web:577ce8e2a2e6f1f692e68c"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.login = async function(){
+
+  let email = document.getElementById("email").value;
+  let senha = document.getElementById("senha").value;
+
+  try{
+    await signInWithEmailAndPassword(auth,email,senha);
+
+    // 🔥 LOGIN OK → VAI PRA MAIN
+    window.location.href = "main2.html";
+
+  }catch(e){
+    document.getElementById("erro").innerText = "Login inválido";
+  }
+};
+</script>
+
+</body>
+</html>

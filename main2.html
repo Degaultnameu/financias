@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Posto Militar - Sistema Completo</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:Segoe UI;
+background:#06140a;
+color:#fff;
+}
+
+/* LOGIN */
+.login{
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:radial-gradient(circle,#0f3d1f,#06140a);
+}
+
+.boxLogin{
+width:340px;
+padding:25px;
+border-radius:15px;
+background:#0d2615;
+border:1px solid #1b5e20;
+text-align:center;
+box-shadow:0 0 20px #000;
+}
+
+.boxLogin h2{color:#00ff88;margin-bottom:15px}
+
+input{
+width:100%;
+padding:10px;
+margin:5px 0;
+border-radius:8px;
+border:none;
+outline:none;
+}
+
+button{
+background:#00c853;
+border:none;
+padding:10px;
+border-radius:8px;
+color:#fff;
+cursor:pointer;
+margin-top:5px;
+}
+
+/* APP */
+header{
+background:#1b5e20;
+padding:15px;
+text-align:center;
+font-weight:bold;
+}
+
+.container{padding:15px}
+
+.card{
+background:#0d2615;
+padding:10px;
+border-radius:10px;
+margin-bottom:10px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:10px;
+}
+
+.tank{
+background:#071a0d;
+padding:10px;
+border-radius:8px;
+text-align:center;
+}
+
+canvas{
+background:#fff;
+border-radius:10px;
+margin-top:10px;
+}
+
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.6);
+justify-content:center;
+align-items:center;
+}
+
+.box{
+background:#0d2615;
+padding:20px;
+border-radius:10px;
+width:90%;
+max-width:500px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage" class="login">
+<div class="boxLogin">
+<h2>LOGIN MILITAR</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Senha">
+
+<button onclick="login()">ENTRAR</button>
+<p id="err"></p>
+</div>
+</div>
+
+<!-- APP -->
+<div id="appPage" style="display:none">
+
+<header>
+POSTO MILITAR - CONTROLE COMPLETO
+<button onclick="logout()" style="float:right;background:#b71c1c">SAIR</button>
+</header>
+
+<div class="container">
+
+<button onclick="abrir()">Nova leitura</button>
+
+<div class="grid">
+<div class="tank">Tanque 1 (15k)</div>
+<div class="tank">Tanque 2 (30k)</div>
+<div class="tank">Tanque 3 (15k)</div>
+<div class="tank">Tanque 4 (15k)</div>
+</div>
+
+<canvas id="grafico"></canvas>
+
+<div id="lista"></div>
+
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+<div class="box">
+
+<h3>Nova Entrada</h3>
+
+<input id="b1" placeholder="Bomba 1">
+<input id="b2" placeholder="Bomba 2">
+<input id="b3" placeholder="Bomba 3">
+
+<input id="r1" placeholder="Tanque 1 leitura">
+<input id="r2" placeholder="Tanque 2 leitura">
+<input id="r3" placeholder="Tanque 3 leitura">
+<input id="r4" placeholder="Tanque 4 leitura">
+
+<button onclick="salvar()">Salvar</button>
+<button onclick="fechar()">Fechar</button>
+
+</div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+import {
+getDatabase,
+ref,
+push,
+onValue,
+remove
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyCeMqdm3gP3g1ys5DboJ68SkiD0aXdVpk4",
+authDomain: "teste-termux-e0f2c.firebaseapp.com",
+projectId: "teste-termux-e0f2c",
+databaseURL: "https://teste-termux-e0f2c-default-rtdb.firebaseio.com",
+storageBucket: "teste-termux-e0f2c.firebasestorage.app",
+messagingSenderId: "786962505829",
+appId: "1:786962505829:web:577ce8e2a2e6f1f692e68c"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getDatabase(firebaseApp);
+
+let cache = [];
+
+/* LOGIN REAL FIREBASE */
+window.login = async () => {
+try {
+await signInWithEmailAndPassword(
+auth,
+email.value,
+password.value
+);
+} catch (e) {
+err.innerText = "Login inválido";
+}
+};
+
+/* LOGOUT */
+window.logout = async () => {
+await signOut(auth);
+};
+
+/* PROTEÇÃO REAL */
+onAuthStateChanged(auth, (user) => {
+if (user) {
+loginPage.style.display = "none";
+appPage.style.display = "block";
+} else {
+loginPage.style.display = "flex";
+appPage.style.display = "none";
+}
+});
+
+window.abrir = () => modal.style.display = "flex";
+window.fechar = () => modal.style.display = "none";
+
+/* CONVERSÃO TANQUE */
+function conv(n, type) {
+let r, c, max;
+
+if (type === "30k") {
+r = 1274.5; c = 6000; max = 2549;
+} else {
+r = 955; c = 5450; max = 1910;
+}
+
+n = Math.max(0, Math.min(max, n));
+
+let a = (r*r*Math.acos((r-n)/r)) - ((r-n)*Math.sqrt((2*r*n)-(n*n)));
+
+return Math.round((a*c)/1000000);
+}
+
+/* FIREBASE REALTIME */
+onValue(ref(db, "abast"), (snap) => {
+const data = snap.val() || {};
+cache = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+render();
+grafico();
+});
+
+/* SALVAR */
+window.salvar = () => {
+push(ref(db, "abast"), {
+data: new Date().toLocaleString(),
+b1: +b1.value || 0,
+b2: +b2.value || 0,
+b3: +b3.value || 0,
+r1: +r1.value || 0,
+r2: +r2.value || 0,
+r3: +r3.value || 0,
+r4: +r4.value || 0,
+
+t1: conv(+r1.value || 0, "15k"),
+t2: conv(+r2.value || 0, "30k"),
+t3: conv(+r3.value || 0, "15k"),
+t4: conv(+r4.value || 0, "15k")
+});
+
+fechar();
+};
+
+/* DELETE */
+window.excluir = (id) => {
+remove(ref(db, "abast/" + id));
+};
+
+/* CHART */
+function grafico() {
+let ctx = document.getElementById("grafico");
+
+let total = cache.slice(-7).map(r => r.t1 + r.t2 + r.t3 + r.t4);
+
+new Chart(ctx, {
+type: "line",
+data: {
+labels: total.map((_, i) => "Dia " + (i + 1)),
+datasets: [{
+label: "Consumo",
+data: total,
+borderColor: "#00ff88"
+}]
+}
+});
+}
+
+/* RENDER */
+function render() {
+lista.innerHTML = cache.map((r, i) => `
+<div class="card">
+<p>${r.data}</p>
+
+<p>Diesel: ${r.t1 + r.t4} L</p>
+<p>Gasolina: ${r.t2 + r.t3} L</p>
+
+<button onclick="gerarPDF(${i})">PDF</button>
+<button onclick="excluir('${r.id}')">Excluir</button>
+</div>
+`).join("");
+}
+
+/* PDF + QR */
+window.gerarPDF = () => {
+
+let dados = cache.slice(-7); // última semana
+
+let w = window.open("", "_blank");
+
+function conversao(r, tipo){
+
+  let radius, coef, max;
+
+  if(tipo === "30k"){
+    radius = 1274.5;
+    coef = 6000;
+    max = 2549;
+  } else {
+    radius = 955;
+    coef = 5450;
+    max = 1910;
+  }
+
+  r = Math.max(0, Math.min(max, r));
+
+  let area = (radius*radius*Math.acos((radius-r)/radius)) -
+             ((radius-r)*Math.sqrt((2*radius*r)-(r*r)));
+
+  return Math.round((area * coef) / 1000000);
+}
+
+function evap(litros, fator){
+  return Math.round(litros * fator);
+}
+
+let html = `
+<html>
+<head>
+<style>
+body{
+font-family:Segoe UI;
+background:#e8f5e9;
+color:#1b5e20;
+padding:20px;
+}
+
+h1{
+text-align:center;
+border:3px solid #1b5e20;
+padding:10px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+th,td{
+border:1px solid #1b5e20;
+padding:6px;
+text-align:center;
+}
+
+th{background:#1b5e20;color:#fff}
+
+.section{
+margin-top:20px;
+padding:10px;
+border:1px solid #1b5e20;
+}
+
+.assinatura{
+margin-top:50px;
+text-align:center;
+}
+
+.linha{
+width:250px;
+margin:auto;
+border-top:2px solid #1b5e20;
+}
+</style>
+</head>
+
+<body>
+
+<h1>RELATÓRIO SEMANAL DE ABASTECIMENTO</h1>
+
+`;
+
+let totalDiesel = 0;
+let totalGasolina = 0;
+
+dados.forEach((r,i)=>{
+
+let t1 = conversao(r.r1,"15k");
+let t2 = conversao(r.r2,"30k"); // TANQUE 2 CORRETO 30K
+let t3 = conversao(r.r3,"15k");
+let t4 = conversao(r.r4,"15k");
+
+totalDiesel += (t1 + t4);
+totalGasolina += (t2 + t3);
+
+html += `
+<div class="section">
+<p><b>Data:</b> ${r.data}</p>
+
+<table>
+<tr><th>Tanque</th><th>Leitura</th><th>Litros convertidos</th></tr>
+
+<tr><td>Tanque 1 (15k)</td><td>${r.r1}</td><td>${t1}</td></tr>
+<tr><td>Tanque 2 (30k)</td><td>${r.r2}</td><td>${t2}</td></tr>
+<tr><td>Tanque 3 (15k)</td><td>${r.r3}</td><td>${t3}</td></tr>
+<tr><td>Tanque 4 (15k)</td><td>${r.r4}</td><td>${t4}</td></tr>
+
+</table>
+
+<p><b>Diesel:</b> ${t1 + t4} L | <b>Gasolina:</b> ${t2 + t3} L</p>
+</div>
+`;
+});
+
+let mediaEvap = 0.0012;
+
+html += `
+<div class="section">
+
+<h3>📊 RESUMO SEMANAL</h3>
+
+<p>Total Diesel: ${totalDiesel} L</p>
+<p>Total Gasolina: ${totalGasolina} L</p>
+
+</div>
+
+<div class="section">
+
+<h3>🌤️ EVAPORAÇÃO (CÁLCULO EXPLICADO)</h3>
+
+<p>Fórmula usada:</p>
+
+<p><b>Evaporação = Litros × fator climático semanal</b></p>
+
+<p>Fator médio aplicado: ${mediaEvap}</p>
+
+<p>Diesel evaporado: ${evap(totalDiesel, mediaEvap)} L</p>
+<p>Gasolina evaporada: ${evap(totalGasolina, mediaEvap)} L</p>
+
+</div>
+
+<div class="assinatura">
+<div class="linha"></div>
+<p><b>CB PINHEIRO</b></p>
+<p>Adj do CLIII</p>
+<p>Leitura avaliada e aprovada</p>
+</div>
+
+</body>
+</html>
+`;
+
+w.document.write(html);
+w.print();
+};
+
+</script>
+
+</body>
+</html>
